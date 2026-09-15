@@ -1,0 +1,38 @@
+name: GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Point the UI at the public API
+        working-directory: frontend
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "Set repository secret API_BASE_URL to your Render API origin (no trailing slash), e.g. https://smart-parking-api.onrender.com"
+            echo "Pages will still publish; login will fail until that secret is set and this workflow is re-run."
+            API_BASE_URL=""
+          fi
+          sed -i "s|__API_BASE__|${API_BASE_URL}|g" src/environments/environment.prod.ts
+      - name: Build
+        working-directory: frontend
+        run: |
+          npm install
+          npx ng build --configuration production --base-href /smart-parking/
+          cp dist/smart-parking-ui/browser/index.html dist/smart-parking-ui/browser/404.html
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: frontend/dist/smart-parking-ui/browser

@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { apiUrl } from '../api-url';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { Role, TokenResponse, User } from '../models';
@@ -29,13 +30,13 @@ export class AuthService {
   }
 
   login(email: string, password: string) {
-    return this.http.post<TokenResponse>('/api/auth/login', { email, password }).pipe(
+    return this.http.post<TokenResponse>(apiUrl('/api/auth/login'), { email, password }).pipe(
       tap(res => this.store(res))
     );
   }
 
   register(body: { email: string; password: string; fullName: string; phone?: string }) {
-    return this.http.post<TokenResponse>('/api/auth/register', body).pipe(
+    return this.http.post<TokenResponse>(apiUrl('/api/auth/register'), body).pipe(
       tap(res => this.store(res))
     );
   }

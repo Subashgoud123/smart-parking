@@ -106,10 +106,17 @@ cd frontend && npm test
 
 CI runs backend tests, Angular build + Karma, then `docker compose build`. On `main`, it POSTs `RENDER_DEPLOY_HOOK` if that GitHub secret is set.
 
-## 10. Cloud deploy
+## 10. Make it public (free) — no local cluster
 
-1. Create Neon Postgres; set `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`.
-2. Render: Web Service from `render.yaml` / `backend/Dockerfile`.
-3. Cloudflare Pages: build `frontend` with `npm run build`, output `dist/smart-parking-ui/browser`. Set `FRONTEND_ORIGIN` on the API to the Pages URL.
+You do **not** need Kubernetes, a local hostname, or port-forwarding. Local Docker stays on your PC. For anyone on the internet:
+
+1. **Code** — this GitHub repo (public).
+2. **Database** — [Neon](https://neon.tech) free Postgres. Copy host, user, password, database. JDBC looks like `jdbc:postgresql://ep-xxx.region.aws.neon.tech/neondb?sslmode=require`.
+3. **API** — [Render](https://render.com) free Web Service from this repo (`backend/Dockerfile`). Env: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_ISSUER=smart-parking`, `FRONTEND_ORIGIN=https://subashgoud123.github.io`. Copy the service URL, e.g. `https://smart-parking-api.onrender.com`.
+4. **UI** — GitHub Pages (workflow `.github/workflows/pages.yml`). In the repo: **Settings → Secrets → Actions** add `API_BASE_URL` = that Render origin (no trailing slash). Then **Settings → Pages** → source branch `gh-pages`. Public URL: https://subashgoud123.github.io/smart-parking/
+
+The first Render request after idle can take ~50s (free tier sleeps). Demo logins are the same as local.
+
+Do not expose `localhost:8088` with a homemade hostname; it only works while your laptop is on.
 
 How to try a flow: login as customer → Layout → filter vacant cars → click a green slot → Book. Staff: Gate for entry/exit. Admin: Dashboard charts and Slots CRUD.
