@@ -27,8 +27,7 @@ import { AuthService } from '../../services/auth.service';
             </mat-form-field>
             <button mat-flat-button color="primary" class="full" [disabled]="form.invalid || busy">Login</button>
           </form>
-          <p class="hint">Demo: customer@smartparking.local / Customer@123<br/>
-            admin@smartparking.local / Admin@123 · staff@smartparking.local / Staff@123</p>
+          <p class="hint">Demo accounts are pre-filled. Admin and staff emails are listed in the README.</p>
           <a routerLink="/register">Create a customer account</a>
         </mat-card-content>
       </mat-card>
