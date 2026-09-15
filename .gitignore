@@ -1,0 +1,23 @@
+# Build
+backend/target/
+frontend/dist/
+frontend/.angular/
+frontend/node_modules/
+*.class
+*.jar
+!backend/src/main/resources/jwt/*.pem
+
+# Env / secrets
+.env
+*.local
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+logs/
+*.log
+
+# OS
+GenJwtKeys.java
+GenJwtKeys.class

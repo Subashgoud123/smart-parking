@@ -1,0 +1,59 @@
+<main class="app-page">
+  <h1>Parking layout</h1>
+  <p class="legend">
+    <span><i class="dot VACANT"></i> Vacant</span>
+    <span><i class="dot OCCUPIED"></i> Occupied</span>
+    <span><i class="dot PRE_BOOKED"></i> Pre-booked</span>
+    <span><i class="dot RESERVED"></i> Reserved</span>
+    <span><i class="dot OUT_OF_SERVICE"></i> Out of service</span>
+  </p>
+  @if (loading) { <mat-progress-bar mode="indeterminate" /> }
+  @for (area of areas(); track area) {
+    <h2>{{ area }}</h2>
+    <section class="slot-grid">
+      @for (slot of inArea(area); track slot.id) {
+        <button type="button" class="slot-chip" [ngClass]="slot.status" (click)="open(slot)">
+          {{ slot.slotNumber }}
+          <small>{{ slot.vehicleType }} · {{ slot.status }}</small>
+        </button>
+      }
+    </section>
+  }
+
+  @if (selected) {
+    <aside class="panel">
+      <h3>{{ selected.slot.slotNumber }}</h3>
+      <p>{{ selected.slot.area }} / {{ selected.slot.floor }} · {{ selected.slot.vehicleType }}</p>
+      <p>Status: <strong>{{ selected.slot.status }}</strong></p>
+      @if (selected.activeBooking) {
+        <p>Booking #{{ selected.activeBooking.id }} · {{ selected.activeBooking.plateNumber }}
+          · {{ selected.activeBooking.startAt | date:'short' }} – {{ selected.activeBooking.endAt | date:'short' }}</p>
+      }
+      @if (selected.openTransaction) {
+        <p>Parked since {{ selected.openTransaction.entryTime | date:'short' }}</p>
+      }
+      @if (selected.slot.status !== 'OUT_OF_SERVICE' && selected.slot.status !== 'OCCUPIED') {
+        <form [formGroup]="bookForm" (ngSubmit)="book()" class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Vehicle</mat-label>
+            <mat-select formControlName="vehicleId">
+              @for (v of vehicles; track v.id) {
+                <mat-option [value]="v.id">{{ v.plateNumber }} ({{ v.vehicleType }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Start</mat-label>
+            <input matInput type="datetime-local" formControlName="startAt" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>End</mat-label>
+            <input matInput type="datetime-local" formControlName="endAt" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="submit">Book this slot</button>
+        </form>
+      }
+      <button mat-button type="button" (click)="selected = undefined">Close</button>
+    </aside>
+  }
+</main>
