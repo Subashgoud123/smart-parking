@@ -1,0 +1,1 @@
+import{Pa as e,W as i}from"./chunk-PV3RJVGS.js";var a=class t{constructor(){this.pending=0;this.active=e(!1)}start(){this.pending++,this.active.set(!0)}stop(){this.pending=Math.max(0,this.pending-1),this.pending===0&&this.active.set(!1)}static{this.\u0275fac=function(n){return new(n||t)}}static{this.\u0275prov=i({token:t,factory:t.\u0275fac,providedIn:"root"})}};export{a};
