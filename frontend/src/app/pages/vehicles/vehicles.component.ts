@@ -34,7 +34,10 @@ import { Vehicle, VehicleType } from '../../models';
           <mat-label>Contact</mat-label>
           <input matInput formControlName="contactPhone" />
         </mat-form-field>
-        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Register vehicle</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">{{ editing ? 'Save vehicle' : 'Register vehicle' }}</button>
+        @if (editing) {
+          <button mat-button type="button" (click)="cancelEdit()">Cancel</button>
+        }
       </form>
       <table mat-table [dataSource]="rows" class="mat-elevation-z1" style="width:100%;margin-top:20px">
         <ng-container matColumnDef="plateNumber"><th mat-header-cell *matHeaderCellDef>Plate</th><td mat-cell *matCellDef="let r">{{ r.plateNumber }}</td></ng-container>
@@ -43,7 +46,10 @@ import { Vehicle, VehicleType } from '../../models';
         <ng-container matColumnDef="nickname"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let r">{{ r.nickname }}</td></ng-container>
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let r"><button mat-button color="warn" (click)="remove(r)">Delete</button></td>
+          <td mat-cell *matCellDef="let r">
+            <button mat-button (click)="edit(r)">Edit</button>
+            <button mat-button color="warn" (click)="remove(r)">Delete</button>
+          </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="cols"></tr>
         <tr mat-row *matRowDef="let row; columns: cols;"></tr>
@@ -57,6 +63,7 @@ export class VehiclesComponent implements OnInit {
   types: VehicleType[] = ['CAR', 'BIKE', 'EV', 'OTHER'];
   cols = ['plateNumber', 'vehicleType', 'ownerName', 'nickname', 'actions'];
   rows: Vehicle[] = [];
+  editing?: Vehicle;
   form = this.fb.nonNullable.group({
     plateNumber: ['', Validators.required],
     vehicleType: ['CAR' as VehicleType, Validators.required],
@@ -73,10 +80,29 @@ export class VehiclesComponent implements OnInit {
   }
 
   add(): void {
-    this.api.createVehicle(this.form.getRawValue()).subscribe(() => {
-      this.form.reset({ plateNumber: '', vehicleType: 'CAR', nickname: '', contactPhone: '' });
+    const body = this.form.getRawValue();
+    const req = this.editing
+      ? this.api.updateVehicle(this.editing.id, body)
+      : this.api.createVehicle(body);
+    req.subscribe(() => {
+      this.cancelEdit();
       this.reload();
     });
+  }
+
+  edit(v: Vehicle): void {
+    this.editing = v;
+    this.form.patchValue({
+      plateNumber: v.plateNumber,
+      vehicleType: v.vehicleType,
+      nickname: v.nickname || '',
+      contactPhone: v.contactPhone || ''
+    });
+  }
+
+  cancelEdit(): void {
+    this.editing = undefined;
+    this.form.reset({ plateNumber: '', vehicleType: 'CAR', nickname: '', contactPhone: '' });
   }
 
   remove(v: Vehicle): void {

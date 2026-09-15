@@ -1,0 +1,28 @@
+# Render blueprint (free-tier friendly)
+
+# 1. Create a Neon Postgres database (free) and copy the JDBC URL.
+# 2. In Render, create a Web Service from this repo using the backend Dockerfile.
+# 3. Set env vars: DB_URL, DB_USERNAME, DB_PASSWORD, JWT_ISSUER, FRONTEND_ORIGIN.
+# 4. Frontend: Cloudflare Pages from /frontend (`npm run build`, output dist/smart-parking-ui/browser).
+#    Point the Pages API proxy or FRONTEND_ORIGIN at the Render URL.
+
+services:
+  - type: web
+    name: smart-parking-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /q/health/live
+    envVars:
+      - key: QUARKUS_HTTP_HOST
+        value: 0.0.0.0
+      - key: JWT_ISSUER
+        value: smart-parking
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false

@@ -34,12 +34,24 @@ export class ApiService {
     return this.http.post<ParkingSlot>('/api/parking-slots', body);
   }
 
+  updateSlot(id: number, body: Partial<ParkingSlot>) {
+    return this.http.put<ParkingSlot>(`/api/parking-slots/${id}`, body);
+  }
+
+  deleteSlot(id: number) {
+    return this.http.delete(`/api/parking-slots/${id}`);
+  }
+
   vehicles() {
     return this.http.get<Vehicle[]>('/api/vehicles');
   }
 
   createVehicle(body: { plateNumber: string; vehicleType: VehicleType; contactPhone?: string; nickname?: string }) {
     return this.http.post<Vehicle>('/api/vehicles', body);
+  }
+
+  updateVehicle(id: number, body: { plateNumber: string; vehicleType: VehicleType; contactPhone?: string; nickname?: string }) {
+    return this.http.put<Vehicle>(`/api/vehicles/${id}`, body);
   }
 
   deleteVehicle(id: number) {

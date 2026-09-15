@@ -1,0 +1,24 @@
+meta {
+  name: Create booking
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/bookings
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "vehicleId": 1,
+    "slotId": 1,
+    "startAt": "2026-09-16T10:00:00",
+    "endAt": "2026-09-16T12:00:00"
+  }
+}

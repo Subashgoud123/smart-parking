@@ -17,7 +17,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((err: HttpErrorResponse) => {
       const body = err.error as ApiError | undefined;
       const message = body?.message || err.statusText || 'Request failed';
-      if (err.status === 401 && !req.url.includes('/api/auth/login')) {
+      if (err.status === 401 && !req.url.includes('/api/auth/')) {
         auth.logout();
       }
       snack.open(message, 'Dismiss', { duration: 4000 });

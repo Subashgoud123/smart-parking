@@ -3,12 +3,14 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthService } from '../services/auth.service';
+import { LoadingService } from '../services/loading.service';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatIconModule, MatProgressBarModule],
   template: `
     <mat-toolbar color="primary">
       <span>Smart Parking</span>
@@ -27,6 +29,9 @@ import { AuthService } from '../services/auth.service';
       <span class="who">{{ auth.user()?.fullName }}</span>
       <button mat-button (click)="auth.logout()">Logout</button>
     </mat-toolbar>
+    @if (loading.active()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
     <router-outlet />
   `,
   styles: [`
@@ -37,6 +42,7 @@ import { AuthService } from '../services/auth.service';
 })
 export class ShellComponent {
   readonly auth = inject(AuthService);
+  readonly loading = inject(LoadingService);
   readonly staff = computed(() => this.auth.isStaff());
   readonly admin = computed(() => this.auth.hasRole('ADMIN'));
 }

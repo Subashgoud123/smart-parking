@@ -7,6 +7,21 @@
     <span><i class="dot RESERVED"></i> Reserved</span>
     <span><i class="dot OUT_OF_SERVICE"></i> Out of service</span>
   </p>
+  <section class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>Vehicle type</mat-label>
+      <mat-select [value]="typeFilter" (selectionChange)="typeFilter = $event.value">
+        <mat-option value="ALL">All</mat-option>
+        <mat-option value="CAR">Car</mat-option>
+        <mat-option value="BIKE">Bike</mat-option>
+        <mat-option value="EV">EV</mat-option>
+        <mat-option value="OTHER">Other</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button type="button" (click)="vacantOnly = !vacantOnly">
+      {{ vacantOnly ? 'Showing vacant only' : 'Show vacant only' }}
+    </button>
+  </section>
   @if (loading) { <mat-progress-bar mode="indeterminate" /> }
   @for (area of areas(); track area) {
     <h2>{{ area }}</h2>

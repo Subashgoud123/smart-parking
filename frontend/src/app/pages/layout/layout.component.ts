@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../services/api.service';
-import { ParkingSlot, SlotDetail, Vehicle } from '../../models';
+import { ParkingSlot, SlotDetail, Vehicle, VehicleType } from '../../models';
 import { localDateTimeValue, toApiDateTime } from '../../util/datetime';
 
 @Component({
@@ -28,6 +28,8 @@ export class LayoutComponent implements OnInit {
   slots: ParkingSlot[] = [];
   vehicles: Vehicle[] = [];
   selected?: SlotDetail;
+  typeFilter: VehicleType | 'ALL' = 'ALL';
+  vacantOnly = false;
   bookForm = this.fb.nonNullable.group({
     vehicleId: [0, Validators.required],
     startAt: [localDateTimeValue(0), Validators.required],
@@ -39,11 +41,14 @@ export class LayoutComponent implements OnInit {
   }
 
   areas(): string[] {
-    return [...new Set(this.slots.map(s => s.area))];
+    return [...new Set(this.slots.map(s => s.area))].filter(a => this.inArea(a).length > 0);
   }
 
   inArea(area: string): ParkingSlot[] {
-    return this.slots.filter(s => s.area === area);
+    return this.slots.filter(s =>
+      s.area === area
+      && (this.typeFilter === 'ALL' || s.vehicleType === this.typeFilter)
+      && (!this.vacantOnly || s.status === 'VACANT'));
   }
 
   refresh(): void {

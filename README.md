@@ -1,40 +1,70 @@
 # Smart Parking
 
-Web app for managing car, bike, EV, and overflow parking slots. Users book (including bulk and pre-book), staff handle entry/exit, and admins see utilization.
+Web app for cars, bikes, EVs, and overflow parking. Customers book or pre-book slots, staff run the gate, and admins manage the layout and see utilization.
 
-## Architecture
+## 1. System design
 
 ```text
-Angular 18 (Material)  --HTTP/JWT-->  Quarkus 3 (Java 21)
-                                      |
-                                   PostgreSQL
+Browser (Angular 18 + Material)
+        |  JWT Bearer
+        v
+Quarkus REST  (resources -> services -> Panache entities)
+        |
+        v
+PostgreSQL (Flyway V1__init.sql)
 ```
 
-- Backend: REST + Hibernate Panache + Flyway + JWT + OpenAPI + health (`/q/health`)
-- Frontend: standalone Angular, JWT interceptor, role guards, visual slot layout
-- Local stack: Docker Compose (Postgres + API + nginx UI)
-
-## Prerequisites
-
-- Docker Desktop (recommended), or Java 21 + Maven + Node 20 + PostgreSQL 16
-- Git and GitHub CLI (`gh`) if you push the repo
-
-## Environment
-
-Copy `.env.example` to `.env` and change passwords before any cloud deploy.
-
-| Variable | Purpose |
+| Layer | Why |
 |---|---|
-| `POSTGRES_*` | Database name and credentials |
-| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | JDBC used by the backend container |
-| `JWT_ISSUER` | Must match the JWT issuer claim |
-| `FRONTEND_ORIGIN` | CORS origin |
+| JWT + roles | Admin / staff / customer without session servers |
+| DTOs only | Entities stay off the wire |
+| Flyway | Same schema locally and in cloud Postgres |
+| Compose | One command for UI + API + database |
 
-Demo JWT keys live in `backend/src/main/resources/jwt/`. Replace them in production.
+**Folder structure**
 
-## Run with Docker (database included)
+```text
+backend/src/main/java/com/smartparking/{resource,service,domain,dto,security,exception}
+frontend/src/app/{pages,services,guards,interceptors,models}
+bruno/                         Bruno collection
+.github/workflows/ci.yml
+docker-compose.yml
+render.yaml                    Free-tier backend blueprint
+```
 
-Postgres is started by Compose. You do not need a cloud database for local work.
+**Schema (many-to-many users↔roles; vehicles/bookings/transactions many-to-one)**
+
+- `users`, `roles`, `user_roles`
+- `vehicles` (owner, plate, type)
+- `parking_slots` (number, area, floor, type, status)
+- `parking_bookings` (window, status, optional `bulk_group_id`)
+- `parking_transactions` (entry, exit, duration)
+
+**HTTP surface** (Swagger at `/swagger`): `/api/auth`, `/api/vehicles`, `/api/parking-slots`, `/api/bookings` (+ `/bulk`, `/cancel`), `/api/parking/entry|exit`, `/api/dashboard/statistics`.
+
+**Free-tier deploy**
+
+| Piece | Choice | Why |
+|---|---|---|
+| Git + CI | GitHub Actions | Free for public/private hobby repos |
+| Database | Neon or Supabase Postgres | Free cloud Postgres; same JDBC as local |
+| API | Render Docker web service | JVM without paying for a cluster; sleeps on free tier |
+| UI | Cloudflare Pages | Static Angular build, generous free tier |
+| Docs / health | Quarkus Swagger + `/q/health` + `/q/metrics` | No paid APM |
+
+## 2. Stack
+
+Java 21, Quarkus 3.17, Hibernate Panache, Flyway, SmallRye JWT, Angular 18, Material, Chart.js, Postgres 16, Docker Compose, GitHub Actions.
+
+## 3. Prerequisites
+
+Docker Desktop (recommended), or Java 21 + Maven + Node 20 + PostgreSQL 16.
+
+## 4. Environment
+
+Copy `.env.example` to `.env`. Never commit real passwords. Demo JWT PEMs are in `backend/src/main/resources/jwt/` — replace them before production.
+
+## 5. Run with Docker (includes Postgres)
 
 ```bash
 copy .env.example .env
@@ -42,16 +72,20 @@ docker compose up --build
 ```
 
 - UI: http://localhost:8088
-- API / Swagger: http://localhost:8080/swagger
-- Health: http://localhost:8080/q/health
+- Swagger: http://localhost:8080/swagger
+- Health: http://localhost:8080/q/health/live
 
-## Run without Docker (dev)
+## 6. Local Postgres + live reload
 
-1. Start Postgres (Compose service only is enough): `docker compose up postgres`
-2. Backend: `cd backend && mvn quarkus:dev`
-3. Frontend: `cd frontend && npm install && npm start` → http://localhost:4200 (proxies `/api` to 8080)
+```bash
+docker compose up postgres
+cd backend && mvn quarkus:dev
+cd frontend && npm install && npm start
+```
 
-## Demo users (seeded on empty database)
+UI is http://localhost:4200 (`proxy.conf.json` forwards `/api` to 8080).
+
+## 7. Demo users (empty database is seeded)
 
 | Role | Email | Password |
 |---|---|---|
@@ -59,27 +93,23 @@ docker compose up --build
 | Staff | staff@smartparking.local | Staff@123 |
 | Customer | customer@smartparking.local | Customer@123 |
 
-## API
+## 8. API testing
 
-Swagger UI documents every resource. Auth: `POST /api/auth/login` then `Authorization: Bearer <token>`.
+Use Swagger Authorize with a login token, or the Bruno collection in `bruno/` (`environments/local.bru`).
 
-## Tests
+## 9. Tests
 
 ```bash
 cd backend && mvn test
 cd frontend && npm test
 ```
 
-Frontend unit tests use Chrome Headless. CI builds the Angular app; Karma is optional locally.
+CI runs backend tests, Angular build + Karma, then `docker compose build`. On `main`, it POSTs `RENDER_DEPLOY_HOOK` if that GitHub secret is set.
 
-## Free-tier hosting (optional)
+## 10. Cloud deploy
 
-| Piece | Suggested free option | Why |
-|---|---|---|
-| Source / CI | GitHub + Actions | Already in this repo |
-| Database | Neon or Supabase Postgres | Free Postgres; set `DB_URL` |
-| Frontend | Cloudflare Pages | Static Angular build |
-| Backend | Render / Fly.io free JVM instance | Needs always-on Java; spins down on free tiers |
-| Monitoring | Quarkus `/q/health` and `/q/metrics` | No extra paid APM |
+1. Create Neon Postgres; set `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`.
+2. Render: Web Service from `render.yaml` / `backend/Dockerfile`.
+3. Cloudflare Pages: build `frontend` with `npm run build`, output `dist/smart-parking-ui/browser`. Set `FRONTEND_ORIGIN` on the API to the Pages URL.
 
-Never commit real secrets. Use GitHub Actions secrets for deploy.
+How to try a flow: login as customer → Layout → filter vacant cars → click a green slot → Book. Staff: Gate for entry/exit. Admin: Dashboard charts and Slots CRUD.
