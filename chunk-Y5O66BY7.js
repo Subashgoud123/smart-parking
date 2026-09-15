@@ -1,0 +1,1 @@
+function i(t){let e=new Date(Date.now()+t*36e5),n=r=>String(r).padStart(2,"0");return`${e.getFullYear()}-${n(e.getMonth()+1)}-${n(e.getDate())}T${n(e.getHours())}:${n(e.getMinutes())}`}function o(t){return t&&(t.length===16?`${t}:00`:t)}export{i as a,o as b};
